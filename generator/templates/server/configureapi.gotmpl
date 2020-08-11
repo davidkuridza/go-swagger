@@ -85,6 +85,11 @@ func configureAPI(api *{{.Package}}.{{ pascalize .Name }}API) http.Handler {
       return nil, errors.NotImplemented("basic auth  ({{ .ID }}) has not yet been implemented")
     }
   }
+  if api.{{ pascalize .ID }}AuthCtx == nil {
+    api.{{ pascalize .ID }}AuthCtx = func(ctx context.Context, user string, pass string) ({{if not ( eq .Principal "interface{}" )}}*{{ end }}{{.Principal}}, error) {
+      return nil, errors.NotImplemented("basic auth  ({{ .ID }}) has not yet been implemented")
+    }
+  }
     {{- else if .IsAPIKeyAuth }}
   // Applies when the "{{ .Name }}" {{ .Source }} is set
   if api.{{ pascalize .ID }}Auth == nil {
@@ -92,9 +97,19 @@ func configureAPI(api *{{.Package}}.{{ pascalize .Name }}API) http.Handler {
       return nil, errors.NotImplemented("api key auth ({{ .ID }}) {{.Name}} from {{.Source}} param [{{ .Name }}] has not yet been implemented")
     }
   }
+  if api.{{ pascalize .ID }}AuthCtx == nil {
+    api.{{ pascalize .ID }}AuthCtx = func(ctx context.Context, token string) ({{if not ( eq .Principal "interface{}" )}}*{{ end }}{{.Principal}}, error) {
+      return nil, errors.NotImplemented("api key auth ({{ .ID }}) {{.Name}} from {{.Source}} param [{{ .Name }}] has not yet been implemented")
+    }
+  }
     {{- else if .IsOAuth2 }}
   if api.{{ pascalize .ID }}Auth == nil {
     api.{{ pascalize .ID }}Auth = func(token string, scopes []string) ({{if not ( eq .Principal "interface{}" )}}*{{ end }}{{.Principal}}, error) {
+      return nil, errors.NotImplemented("oauth2 bearer auth ({{ .ID }}) has not yet been implemented")
+    }
+  }
+  if api.{{ pascalize .ID }}AuthCtx == nil {
+    api.{{ pascalize .ID }}AuthCtx = func(ctx context.Context, token string, scopes []string) ({{if not ( eq .Principal "interface{}" )}}*{{ end }}{{.Principal}}, error) {
       return nil, errors.NotImplemented("oauth2 bearer auth ({{ .ID }}) has not yet been implemented")
     }
   }

@@ -45,8 +45,11 @@ func New{{ pascalize .Name }}API(spec *loads.Document) *{{ pascalize .Name }}API
     useSwaggerUI:           false,
     ServeError:             errors.ServeError,
     BasicAuthenticator:     security.BasicAuth,
+    BasicAuthenticatorCtx:  security.BasicAuthCtx,
     APIKeyAuthenticator:    security.APIKeyAuth,
+    APIKeyAuthenticatorCtx: security.APIKeyAuthCtx,
     BearerAuthenticator:    security.BearerAuth,
+    BearerAuthenticatorCtx: security.BearerAuthCtx,
     {{ range .Consumes }}
       {{- if .Implementation }}
         {{ pascalize .Name }}Consumer: {{ .Implementation }},
@@ -119,12 +122,21 @@ type {{ pascalize .Name }}API struct {
   // BasicAuthenticator generates a runtime.Authenticator from the supplied basic auth function.
   // It has a default implementation in the security package, however you can replace it for your particular usage.
   BasicAuthenticator func(security.UserPassAuthentication) runtime.Authenticator
+  // BasicAuthenticatorCtx generates a runtime.Authenticator from the supplied basic auth function with the request context.
+  // It has a default implementation in the security package, however you can replace it for your particular usage.
+  BasicAuthenticatorCtx func(security.UserPassAuthenticationCtx) runtime.Authenticator
   // APIKeyAuthenticator generates a runtime.Authenticator from the supplied token auth function.
   // It has a default implementation in the security package, however you can replace it for your particular usage.
   APIKeyAuthenticator func(string, string, security.TokenAuthentication) runtime.Authenticator
+  // APIKeyAuthenticatorCtx generates a runtime.Authenticator from the supplied token auth function with the request context.
+  // It has a default implementation in the security package, however you can replace it for your particular usage.
+  APIKeyAuthenticatorCtx func(string, string, security.TokenAuthenticationCtx) runtime.Authenticator
   // BearerAuthenticator generates a runtime.Authenticator from the supplied bearer token auth function.
   // It has a default implementation in the security package, however you can replace it for your particular usage.
   BearerAuthenticator func(string, security.ScopedTokenAuthentication) runtime.Authenticator
+  // BearerAuthenticatorCtx generates a runtime.Authenticator from the supplied bearer token auth function with the request context.
+  // It has a default implementation in the security package, however you can replace it for your particular usage.
+  BearerAuthenticatorCtx func(string, security.ScopedTokenAuthenticationCtx) runtime.Authenticator
   {{ range .Consumes }}
   // {{ pascalize .Name }}Consumer registers a consumer for the following mime types:
     {{- range .AllSerializers }}
@@ -145,18 +157,27 @@ type {{ pascalize .Name }}API struct {
   // {{ pascalize .ID }}Auth registers a function that takes username and password and returns a principal
   // it performs authentication with basic auth
   {{ pascalize .ID }}Auth func(string, string) ({{ if not ( eq .Principal "interface{}" ) }}*{{ end }}{{ .Principal }}, error)
+  // {{ pascalize .ID }}AuthCtx registers a function that takes request context, username and password and returns a principal
+  // it performs authentication with basic auth
+  {{ pascalize .ID }}AuthCtx func(context.Context, string, string) ({{ if not ( eq .Principal "interface{}" ) }}*{{ end }}{{ .Principal }}, error)
     {{- end }}
     {{- if .IsAPIKeyAuth}}
 
   // {{ pascalize .ID }}Auth registers a function that takes a token and returns a principal
   // it performs authentication based on an api key {{ .Name }} provided in the {{.Source}}
   {{ pascalize .ID }}Auth func(string) ({{ if not ( eq .Principal "interface{}" ) }}*{{ end }}{{ .Principal }}, error)
+  // {{ pascalize .ID }}AuthCtx registers a function that takes request context, a token and returns a principal
+  // it performs authentication based on an api key {{ .Name }} provided in the {{.Source}}
+  {{ pascalize .ID }}AuthCtx func(context.Context, string) ({{ if not ( eq .Principal "interface{}" ) }}*{{ end }}{{ .Principal }}, error)
     {{- end }}
     {{- if .IsOAuth2 }}
 
   // {{ pascalize .ID }}Auth registers a function that takes an access token and a collection of required scopes and returns a principal
   // it performs authentication based on an oauth2 bearer token provided in the request
   {{ pascalize .ID }}Auth func(string, []string) ({{ if not ( eq .Principal "interface{}" ) }}*{{ end }}{{ .Principal }}, error)
+  // {{ pascalize .ID }}AuthCtx registers a function that takes request context, an access token and a collection of required scopes and returns a principal
+  // it performs authentication based on an oauth2 bearer token provided in the request
+  {{ pascalize .ID }}AuthCtx func(context.Context, string, []string) ({{ if not ( eq .Principal "interface{}" ) }}*{{ end }}{{ .Principal }}, error)
     {{- end }}
   {{- end }}
   {{- if .SecurityDefinitions }}
